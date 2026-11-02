@@ -1,61 +1,33 @@
 name: Build APK
-
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 40
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
-          cache: gradle
+          java-version: 17
 
-      - name: Install Android SDK command-line tools
-        shell: bash
-        env:
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          mkdir -p "$ANDROID_SDK_ROOT"
-          cd /tmp
-          curl -fsSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          rm -rf "$ANDROID_SDK_ROOT/cmdline-tools"
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT"
-          mv "$ANDROID_SDK_ROOT/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools-old"
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          mv "$ANDROID_SDK_ROOT/cmdline-tools-old" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses
+      # The GitHub runner already ships the Android SDK, so nothing is installed by hand.
+      # Only the licences are accepted so Gradle can fetch any missing platform itself.
+      - name: Accept Android licences
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
-      - name: Install Android packages
-        shell: bash
-        env:
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --install \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Upload APK artifact
-        if: success()
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: Lunchet-debug-apk
+          name: NoirLauncher-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
