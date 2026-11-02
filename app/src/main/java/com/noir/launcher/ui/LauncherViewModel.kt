@@ -80,7 +80,7 @@ class LauncherViewModel(private val app: Application) : AndroidViewModel(app) {
         .distinctUntilChanged()
         .flatMapLatest { (enabled, coords, _) ->
             val ll = parseCoords(coords)
-            if (!enabled || ll == null) flowOf(null)
+            if (!enabled || ll == null) flowOf<Weather?>(null)
             else flow {
                 var last: Weather? = null
                 while (true) {
