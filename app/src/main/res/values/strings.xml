@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Noir</string>
+    <string name="lock_service_label">Noir double-tap lock</string>
+    <string name="notif_service_label">Noir notifications</string>
+    <string name="lock_service_desc">Lets Noir lock the screen, take screenshots, open the power menu and draw the Dynamic Island around your camera. It does not read screen content.</string>
+    <string name="lock_hint">Turn on the Noir system service in Settings > Accessibility to use this</string>
+</resources>
