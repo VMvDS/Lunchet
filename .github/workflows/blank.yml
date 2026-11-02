@@ -21,22 +21,31 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android SDK licenses
+      - name: Install Android SDK command-line tools
         shell: bash
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          yes | sdkmanager --licenses || true
+          mkdir -p "$ANDROID_SDK_ROOT"
+          cd /tmp
+          curl -fsSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          rm -rf "$ANDROID_SDK_ROOT/cmdline-tools"
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+          unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT"
+          mv "$ANDROID_SDK_ROOT/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools-old"
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+          mv "$ANDROID_SDK_ROOT/cmdline-tools-old" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses
 
-      - name: Install required Android SDK packages
+      - name: Install Android packages
         shell: bash
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          sdkmanager --install \
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --install \
             "platform-tools" \
             "platforms;android-35" \
-            "build-tools;35.0.0" \
-            "cmdline-tools;latest"
+            "build-tools;35.0.0"
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
@@ -44,7 +53,7 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Upload debug APK artifact
+      - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
